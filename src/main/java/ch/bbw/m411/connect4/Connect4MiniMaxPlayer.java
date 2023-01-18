@@ -1,49 +1,42 @@
 package ch.bbw.m411.connect4;
 
-import ch.bbw.m411.connect4.Connect4ArenaMain;
-
-import java.util.ArrayList;
 import static ch.bbw.m411.connect4.Connect4ArenaMain.*;
 
 public class Connect4MiniMaxPlayer extends Connect4ArenaMain.DefaultPlayer {
     int bestMove = NOMOVE; // bestMove ist die beste Zugposition, die durch die MiniMax-Suche gefunden wird
-    int maxDepth; // maxDepth ist die maximale Tiefe der MiniMax-Suche
-    int minimalDepth; // minimalDepth ist die minimale Tiefe der MiniMax-Suche
+    int maxSearchDepth; // maxSearchDepth ist die maximale Tiefe der MiniMax-Suche
+    int minSearchDepth; // minimalSearchDepth ist die minimale Tiefe der MiniMax-Suche
 
     public Connect4MiniMaxPlayer(int depth) {
         super();
-        maxDepth = depth;
+        maxSearchDepth = depth;
     }
 
     @Override
     int play() {
-        int movesAvailable = countAvailableMoves(board);
-        minimalDepth = Math.min(movesAvailable, maxDepth); // minimalDepth ist die minimale der verfügbaren Züge und der maximalen Tiefe
-        miniMaxPlay(myColor, minimalDepth); // Startet die MiniMax-Suche mit minimalDepth Tiefe
+        minSearchDepth = Math.min(countAvailableMoves(board), maxSearchDepth); // minimalSearchDepth ist die minimale der verfügbaren Züge und der maximalen Tiefe
+        miniMaxPlay(myColor, minSearchDepth); // Startet die MiniMax-Suche mit minimalSearchDepth Tiefe
         return bestMove; // Gibt die beste gefundene Zugposition zurück
     }
 
-    private int miniMaxPlay(Connect4ArenaMain.Stone myColor, int depth) {
-        if (isWinning(board, myColor.opponent())) {
+    private int miniMaxPlay(Connect4ArenaMain.Stone currentPlayer, int depth) {
+        if (isWinning(board, currentPlayer.opponent())) {
             return Integer.MIN_VALUE + 1; // Wenn der Gegner gewonnen hat, wird ein sehr niedriger Wert zurückgegeben
         }
 
         if (depth == 0) {
-            return rate(myColor, board); // Wenn die maximale Tiefe erreicht ist, wird der aktuelle Zustand bewertet
+            return evaluate(currentPlayer, board); // Wenn die maximale Tiefe erreicht ist, wird der aktuelle Zustand bewertet
         }
 
-        if (myColor == this.myColor) {  // Wenn es der eigene Zug ist
+        if (currentPlayer == this.myColor) {  // Wenn es der eigene Zug ist
             int max = Integer.MIN_VALUE;
             for (int move : getPossibleMoves(board)) {
-                board[move] = myColor; // Zug wird ausgeführt
-                int currentValue = miniMaxPlay(myColor.opponent(), depth - 1);
+                board[move] = currentPlayer; // Zug wird ausgeführt
+                int currentValue = miniMaxPlay(currentPlayer.opponent(), depth - 1);
                 board[move] = null; // Zug wird rückgängig
-                if (depth == minimalDepth) {
-                    System.out.println("Index: " + move + " Value: " + currentValue + "\n");
-                }
                 if (currentValue > max) {
                     max = currentValue;
-                    if (depth == minimalDepth) {
+                    if (depth == minSearchDepth) {
                         bestMove = move; // Speichert den aktuellen Zug als besten Zug
                     }
                 }
@@ -52,12 +45,9 @@ public class Connect4MiniMaxPlayer extends Connect4ArenaMain.DefaultPlayer {
         } else { // Wenn es der Zug des Gegners ist
             int min = Integer.MAX_VALUE;
             for (int move : getPossibleMoves(board)) {
-                board[move] = myColor; // Zug wird ausgeführt
-                int currentValue = miniMaxPlay(myColor.opponent(), depth - 1);
-                board[move] = null;
-                if (depth == minimalDepth) {
-                    System.out.println("Index: " + move + " Value: " + currentValue + "\n");
-                }
+                board[move] = currentPlayer.opponent(); // Zug wird ausgeführt
+                int currentValue = miniMaxPlay(myColor, depth - 1);
+                board[move] = null; // Zug wird rückgängig
                 if (currentValue < min) {
                     min = currentValue;
                 }
@@ -65,5 +55,6 @@ public class Connect4MiniMaxPlayer extends Connect4ArenaMain.DefaultPlayer {
             return min;
         }
     }
+
 
 }

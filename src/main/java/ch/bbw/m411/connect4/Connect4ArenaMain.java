@@ -3,7 +3,9 @@ package ch.bbw.m411.connect4;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
+import java.util.stream.IntStream;
 
 /**
  * Plays a game of Connect Four on a 4x7 board (a variation of the original 6x7 board).
@@ -19,7 +21,7 @@ public class Connect4ArenaMain {
 
 
 	public static void main(String[] args) {
-		new Connect4ArenaMain().play(new HumanPlayer(), new Connect4MiniMaxPlayer(6));
+		new Connect4ArenaMain().play(new HumanPlayer(), new Connect4AlphaBetaPlayer(6));
 	}
 
 	static String toDebugString(Stone[] board) {
@@ -64,7 +66,7 @@ public class Connect4ArenaMain {
 	}
 
 	public static boolean isWinning(Stone[] board, Stone forColor) {
-
+		// Überprüft, ob es einen Gewinner gibt, indem es jede mögliche Gewinnkombination durchläuft
 		for (int i = 0; i < WIDTH; i++) {
 			if (board[i] == forColor && board[i] == board[i + 7] && board[i + 7] == board[i + 14] && board[i + 14] == board[i + 21]) {
 				return true;
@@ -89,22 +91,24 @@ public class Connect4ArenaMain {
 		return false;
 	}
 
-	public static int rate(Connect4ArenaMain.Stone myColor, Stone[] board) {
-
+	//Die Methode "evaluate" berechnet die Gesamtpunktzahl eines Spielers auf dem Brett,
+	// basierend auf einem vorbestimmten Punktwert für jede Position.
+	public static int evaluate(Connect4ArenaMain.Stone myColor, Stone[] board) {
 		int[] points = {3, 4, 6, 7, 6, 4, 3
 				, 2, 4, 6, 7, 6, 4, 2
 				, 2, 4, 6, 7, 6, 4, 2
 				, 3, 4, 6, 7, 6, 4, 3
 		};
-		int totalPoints = 0;
-		for (int i = 0; i < 28; i++) {
-			if (board[i] == myColor) {
-				totalPoints += points[i];
-			}
-		}
+		int totalPoints = IntStream
+				.range(0, points.length)
+				.filter(i -> board[i] == myColor)
+				.map(i -> points[i])
+				.sum();
 		return totalPoints;
 	}
 
+	//Die Methode "getPossibleMoves" gibt eine Liste der möglichen Züge
+	// (leere Positionen auf dem Brett) zurück.
 	public static ArrayList<Integer> getPossibleMoves(Stone[] board) {
 		ArrayList<Integer> possibleMoves = new ArrayList<Integer>();
 		for (int i = 0; i < 7; i++) {
@@ -118,6 +122,7 @@ public class Connect4ArenaMain {
 		return  possibleMoves;
 	}
 
+	//Die Methode "countAvailableMoves" gibt die Gesamtzahl der verfügbaren Züge zurück.
 	public static int countAvailableMoves(Stone[] board) {
 		int moves = 0;
 		for (int i = 0; i < WIDTH * HEIGHT; i++) {
@@ -127,6 +132,7 @@ public class Connect4ArenaMain {
 		}
 		return moves;
 	}
+
 
 	public enum Stone {
 		RED, BLUE;
@@ -249,20 +255,4 @@ public class Connect4ArenaMain {
 			throw new IllegalStateException("cannot play at all");
 		}
 	}
-
-	public static class GoodPlayer extends DefaultPlayer {
-		@Override
-		int play() {
-			for (int c = 0; c < WIDTH; c++) {
-				for (int r = 0; r < HEIGHT; r++) {
-					var index = r * WIDTH + c;
-					if (board[index] == null) {
-						return index;
-					}
-				}
-			}
-			throw new IllegalStateException("cannot play at all");
-		}
-	}
-
 }

@@ -1,26 +1,22 @@
 package ch.bbw.m411.connect4;
 
-import java.util.ArrayList;
-
 import static ch.bbw.m411.connect4.Connect4ArenaMain.*;
 
 public class Connect4AlphaBetaPlayer extends Connect4ArenaMain.DefaultPlayer {
 
     int bestMove = NOMOVE; // bestMove ist die beste Zugposition, die durch die Alpha-Beta-Suche gefunden wird
-    int maxDepth; // maxDepth ist die maximale Tiefe der Alpha-Beta-Suche
-    int minimalDepth; // minimalDepth ist die minimale Tiefe der Alpha-Beta-Suche
-
+    int maxSearchDepth; // maxSearchDepth ist die maximale Tiefe der Alpha-Beta-Suche
+    int minSearchDepth; // minSearchDepth ist die minimale Tiefe der Alpha-Beta-Suche
 
     public Connect4AlphaBetaPlayer(int depth) {
         super();
-        maxDepth = depth;
+        maxSearchDepth = depth;
     }
 
     @Override
     int play() {
-        int movesAvailable = countAvailableMoves(board);
-        minimalDepth = Math.min(movesAvailable, maxDepth); // minimalDepth ist die minimale der verfügbaren Züge und der maximalen Tiefe
-        alphaBetaPlay(myColor, minimalDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        minSearchDepth = Math.min(countAvailableMoves(board), maxSearchDepth); // minSearchDepth ist die minimale der verfügbaren Züge und der maximalen Tiefe
+        alphaBetaPlay(myColor, minSearchDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
         return bestMove;
     }
 
@@ -29,9 +25,8 @@ public class Connect4AlphaBetaPlayer extends Connect4ArenaMain.DefaultPlayer {
             return Integer.MIN_VALUE + 1; // Wenn der Gegner gewonnen hat, wird ein sehr niedriger Wert zurückgegeben
         }
         if (depth == 0) {
-            return rate(myColor, board); // Wenn die maximale Tiefe erreicht ist, wird der aktuelle Zustand bewertet
+            return evaluate(myColor, board); // Wenn die maximale Tiefe erreicht ist, wird der aktuelle Zustand bewertet
         }
-
         int max = alpha;
 
         for (int move : getPossibleMoves(board)) {
@@ -42,13 +37,9 @@ public class Connect4AlphaBetaPlayer extends Connect4ArenaMain.DefaultPlayer {
                 int currentValue = -alphaBetaPlay(myColor.opponent(), depth - 1, -beta, -max);
 
                 board[move] = null; // Der Zug wird rückgängig gemacht
-                if (depth == minimalDepth) {
-                    System.out.printf("Index: " + move + " Value: " + currentValue + "\n"); // Ausgabe des aktuellen Zuges und dessen Bewertung
-                }
-
                 if (currentValue > max) {
                     max = currentValue;
-                    if (depth == minimalDepth) {
+                    if (depth == minSearchDepth) {
                         bestMove = move; // Speichert den aktuellen Zug als besten Zug
                     }
                     if (max >= beta) {
